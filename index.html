@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <main id="vue-app" class="wrapper">
+      <h1>Witaj, {{ user }} oto Twoja lista zakupów!</h1>
+
+      <section>
+        <!-- Filtrowanie produktów -->
+        <div class="shopping-list-filters module">
+          <!-- filterStatus === 'purchased' ? 'is-active': '' - ten zapis odpowiada za dodanie klasy CSS, która odpowiada za style wyróżniające aktywny filtr -->
+          <ul>
+            <li>
+              <button
+                title="Pokaż wszystkie"
+                @click="filterByStatus('all')"
+                :class="filterStatus === 'all' ? 'is-active': ''"
+              >
+                Wszystkie
+              </button>
+            </li>
+            <li>
+              <button
+                title="Pokaż Kupione"
+                @click="filterByStatus('purchased')"
+                :class="filterStatus === 'purchased' ? 'is-active': ''"
+              >
+                Kupione
+              </button>
+            </li>
+            <li>
+              <button
+                title="Pokaż Niekupione"
+                @click="filterByStatus('tobuy')"
+                :class="filterStatus === 'tobuy' ? 'is-active': ''"
+              >
+                Niekupione
+              </button>
+            </li>
+          </ul>
+        </div>
+        <hr />
+      </section>
+
+      <section>
+        <!-- Formularz dodawania produktów -->
+        <div class="form-product module">
+          <form method="post" @submit.prevent="addNewProduct">
+            <div class="form-product-field">
+              <label for="input-product-name">Nazwa produktu:</label>
+              <!-- v-model.trim - działa tak samo jak metod .trim() w "czystym JS" -->
+              <input
+                id="input-product-name"
+                name="input-product-name"
+                type="text"
+                placeholder="podaj nazwę"
+                v-model.trim="newProductName"
+                @input="onChangeNewProductName"
+              />
+              <span class="message-error" v-show="newProductNameError">
+                Uzupełnij pole nazwy produktu.
+              </span>
+            </div>
+
+            <div class="form-product-field">
+              <button type="submit" title="Kliknij aby dodać nowy produkt">
+                Dodaj produkt
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <hr />
+
+        <!-- Lista produktów -->
+        <div class="shopping-list module" v-if="filteredProducts.length">
+          <ul>
+            <!-- Atrybut :key jest istotnym elementem. Pamiętaj, aby go dodać jeśli będziesz używać, np. zdarzeń (click, itd.) -->
+            <li class="element"
+              v-for="product in filteredProducts"
+              :key="'product-' + product.id" draggable="true" @dragover.prevent="dragover($event, product.id)" @drop="drop($event, product.id)" @dragstart="dragstart($event, product.id)">
+            {{ product.name}}         
+              <div>
+                <span v-text="product.name"></span>
+                <span>
+                  <label :for="inputId('product-purchasestatus', product.id)">
+                    Kupione
+                  </label>
+                  <input
+                    type="checkbox"
+                    :id="inputId('product-purchasestatus', product.id)"
+                    v-model="product.purchaseStatus"
+                    @change="updatePurchaseStatus(product)"
+                    :disabled="disabledStatusInputPurchase(product)"
+                  />
+                </span>
+                <span>
+                  <label :for="inputId('product-price', product.id)">
+                    Kwota produktu
+                  </label>
+                  <!-- v-model.number - parsowanie stringa na Number -->
+                  <input
+                    :id="inputId('product-price', product.id)"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    v-model.number="product.price"
+                    @change="updateProductPrice(product)"
+                  />
+                  <b>zł</b>
+                </span>
+                <span>
+                  <button title="Usuń produkt" @click="removeProduct(product)">
+                    Usuń
+                  </button>
+                 
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <!-- Komunikat błędu wyświetlany jeśli żaden z produktów z listy filteredProducts nie pasuje pod aktywny filtr -->
+          <p>Brak produktów</p>
+        </div>
+
+        <template v-if="products.length > 0">
+          <hr />
+
+          <!-- Podsumowanie kupionych produktów -->
+          <div class="shopping-list-summary module">
+            Zakupiono <b v-text="productsPurchasedCount"></b> z
+            <b v-text="products.length"></b> za
+            <b><span v-text="sumPricePurchasedProducts"></span> zł</b>.
+          </div>
+        </template>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="./scripts.js"></script>
+  </body>
+</html>
